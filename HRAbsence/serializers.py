@@ -46,6 +46,10 @@ class AbsenceBusinessSerializer(SQLAlchemyAutoSchema):
 class AbsenceSerializer(SQLAlchemyAutoSchema):
     type = EnumField(Type, by_value=False)
 
+    parent_lookup_kwargs = {
+        'user_pk': 'user__pk',
+    }
+
     class Meta:
         model = Absence
         sqla_session = session

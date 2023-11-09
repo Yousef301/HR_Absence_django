@@ -62,34 +62,6 @@ class UserView(viewsets.ViewSet):
         except ValidationError as err:
             return Response(err.messages, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['GET'])
-    def absence_requests(self, request, pk=None):
-        from_ = request.GET.get('from')
-        to_ = request.GET.get('to')
-        status_ = request.GET.get('status')
-        created = request.GET.get('created')
-        types = request.GET.getlist('types')
-        if from_ is None and to_ is None and status_ is None and created is None and not types:
-            absences = abs_ope.get_by_user(pk)
-            if absences:
-                result = abs_req_ser.dump(absences, many=True)
-                return Response(result)
-
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-        else:
-            data = {'from': from_,
-                    'to': to_,
-                    'status': status_,
-                    'created': created,
-                    'types': types}
-            result = abs_req_ope.get_by_data(data, pk)
-            if result:
-                ser = AbsenceRequestSerializer(exclude=['absence_id'])
-                result = ser.dump(result, many=True)
-                return Response(result)
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
     @action(detail=True, methods=['GET', 'POST'])
     def employees_requests(self, request, pk=None):
         user = user_ope.get(pk)
@@ -113,34 +85,6 @@ class UserView(viewsets.ViewSet):
 
         return Response(status=status.HTTP_404_NOT_FOUND)
 
-    @action(detail=True, methods=['GET', 'POST'])
-    def request_absence(self, request, pk=None):
-        if request.method == 'GET':
-            user = user_ope.get(pk)
-            absences = abs_ope.get_by_company(user.business_id)
-            if absences:
-                ser = AbsenceSerializer(exclude=['business'])
-                result = ser.dump(absences, many=True)
-                return Response(result, status=status.HTTP_200_OK)
-
-            return Response({"message": "Your Company doesn't offer any absence..."})
-
-        elif request.method == 'POST':
-            try:
-                data, valid, msg = abs_req_ope.handle_request(request.data, pk)
-
-                if not valid:
-                    return Response({"message": msg})
-                absence = abs_req_ser.load(data, session=session)
-                absence.user_id = pk
-
-                abs_req_ope.add(absence)
-
-                return Response(abs_req_ser.dump(absence))
-
-            except ValidationError as err:
-                return Response(err.messages, status=status.HTTP_400_BAD_REQUEST)
-
 
 class RegisterView(viewsets.ViewSet):
     def list(self, request):
@@ -159,16 +103,45 @@ class RegisterView(viewsets.ViewSet):
 
 
 class AbsenceView(viewsets.ViewSet):
-    def list(self, request):
-        absences = abs_ope.list()
-        result = abs_ser.dump(absences, many=True)
-        return Response(result)
+    def list(self, request, user_pk=None):
+        from_ = request.GET.get('from')
+        to_ = request.GET.get('to')
+        status_ = request.GET.get('status')
+        created = request.GET.get('created')
+        types = request.GET.getlist('types')
+        if from_ is None and to_ is None and status_ is None and created is None and not types:
+            absences = abs_ope.get_by_user(user_pk)
+            if absences:
+                result = abs_req_ser.dump(absences, many=True)
+                return Response(result)
 
-    def create(self, request):
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        else:
+            data = {'from': from_,
+                    'to': to_,
+                    'status': status_,
+                    'created': created,
+                    'types': types}
+            result = abs_req_ope.get_by_data(data, user_pk)
+            if result:
+                ser = AbsenceRequestSerializer(exclude=['absence_id'])
+                result = ser.dump(result, many=True)
+                return Response(result)
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+    def create(self, request, user_pk=None):
         try:
-            absence = abs_ser.load(request.data, session=session)
-            abs_ope.add(absence)
-            return Response(request.data, status=status.HTTP_201_CREATED)
+            data, valid, msg = abs_req_ope.handle_request(request.data, user_pk)
+
+            if not valid:
+                return Response({"message": msg})
+            absence = abs_req_ser.load(data, session=session)
+            absence.user_id = user_pk
+
+            abs_req_ope.add(absence)
+
+            return Response(abs_req_ser.dump(absence))
 
         except ValidationError as err:
             return Response(err.messages, status=status.HTTP_400_BAD_REQUEST)
