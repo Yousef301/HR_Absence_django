@@ -62,29 +62,6 @@ class UserView(viewsets.ViewSet):
         except ValidationError as err:
             return Response(err.messages, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['GET', 'POST'])
-    def employees_requests(self, request, pk=None):
-        user = user_ope.get(pk)
-        if user and user.role.name == 'Manager':
-            requests = abs_req_ope.get_by_business_id(user.business_id)
-            if requests:
-                if request.method == 'GET':
-                    results = abs_req_ser.dump(requests, many=True)
-                    return Response(results)
-                elif request.method == 'POST':
-                    absence_request = request.data
-                    updated = []
-                    for req in absence_request:
-                        absence = abs_req_ope.get(req['id'])
-                        updated.append(abs_req_ser.load(req, instance=absence, session=session, partial=True))
-                        commit()
-                    return Response(abs_req_ser.dump(updated, many=True), status=status.HTTP_207_MULTI_STATUS)
-
-        elif user and user.role.name != 'Manager':
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
 
 class RegisterView(viewsets.ViewSet):
     def list(self, request):
@@ -145,6 +122,37 @@ class AbsenceView(viewsets.ViewSet):
 
         except ValidationError as err:
             return Response(err.messages, status=status.HTTP_400_BAD_REQUEST)
+
+    def retrieve(self, request, pk=None, user_pk=None):
+        req = abs_req_ope.get(pk)
+        if req:
+            result = abs_req_ser.dump(req)
+            return Response(result)
+
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=False, methods=['GET', 'PATCH'])
+    def employees(self, request, user_pk=None):
+        user = user_ope.get(user_pk)
+        if user and user.role.name == 'Manager':
+            requests = abs_req_ope.get_by_business_id(user.business_id)
+            if requests:
+                if request.method == 'GET':
+                    results = abs_req_ser.dump(requests, many=True)
+                    return Response(results)
+                elif request.method == 'PATCH':
+                    absence_request = request.data
+                    updated = []
+                    for req in absence_request:
+                        absence = abs_req_ope.get(req['id'])
+                        updated.append(abs_req_ser.load(req, instance=absence, session=session, partial=True))
+                        commit()
+                    return Response(abs_req_ser.dump(updated, many=True), status=status.HTTP_207_MULTI_STATUS)
+
+        elif user and user.role.name != 'Manager':
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 class AbsenceBusinessView(viewsets.ViewSet):
