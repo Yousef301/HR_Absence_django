@@ -11,6 +11,11 @@ from rest_framework import permissions
 #         manager = bool(usr.role.name == "Manager")
 #         return bool(request.user and manager)
 
+class IsAuthenticated(permissions.BasePermission):
+    def has_permission(self, request, view):
+        u_pk = int(request.parser_context['kwargs']['user_pk'])
+        return bool(request.user and request.user.is_authenticated and u_pk == request.user.user_id)
+
 
 class ManagerPermissions(permissions.BasePermission):
     def has_permission(self, request, view):
