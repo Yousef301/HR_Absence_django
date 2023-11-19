@@ -1,17 +1,15 @@
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from rest_framework.decorators import action
+# from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 from rest_framework.views import APIView
 
-from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth import authenticate
 from marshmallow import ValidationError
 
-from .permissions import ManagerPermissions
+from .permissions import ManagerPermissions, IsAuthenticated
 from .serializers import *
 from .components import *
 from .models import *
