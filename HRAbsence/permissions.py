@@ -1,4 +1,4 @@
-from .models import session, UserAlchemy
+from .models import BusinessGroup
 
 from rest_framework import permissions
 
@@ -14,4 +14,9 @@ from rest_framework import permissions
 
 class ManagerPermissions(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.groups.filter(name='Manager').exists()
+        bid = request.parser_context['kwargs']['business_pk']
+        group = request.user.groups.filter(name='Manager').first()
+
+        if group:
+            return BusinessGroup.objects.filter(group=group.id, business_id=bid).exists()
+        return False
