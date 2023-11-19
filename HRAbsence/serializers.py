@@ -1,7 +1,8 @@
-from marshmallow import fields
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from marshmallow_enum import EnumField
-from HRAbsence.models import *
+from marshmallow import fields
+
+from .models import *
 from .enums import *
 
 
@@ -18,16 +19,7 @@ class UserSerializer(SQLAlchemyAutoSchema):
     role = EnumField(Role, by_value=False)
 
     class Meta:
-        model = User
-        sqla_session = session
-        include_relationships = True
-        load_instance = True
-        include_fk = True
-
-
-class LoginSerializer(SQLAlchemyAutoSchema):
-    class Meta:
-        model = Login
+        model = UserAlchemy
         sqla_session = session
         include_relationships = True
         load_instance = True

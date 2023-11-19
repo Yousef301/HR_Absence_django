@@ -2,7 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import and_
 
-from HRAbsence.models import *
+from .models import *
 
 
 def commit():
@@ -28,8 +28,9 @@ class AbsenceOpe:
         return session.query(Absence).join(AbsenceBusiness, Absence.id == AbsenceBusiness.absence_id).filter(
             AbsenceBusiness.business_id == pk).all()
 
-    def get_by_user(self, pk=None):
-        return session.query(AbsenceRequest).where(AbsenceRequest.user_id == pk).all()
+    def get_by_user(self, pk=None, bid=None):
+        return session.query(AbsenceRequest).where(
+            and_(AbsenceRequest.user_id == pk, UserAlchemy.business_id == bid)).all()
 
     def get_by_name(self, names):
         ids = session.query(Absence.id).filter(Absence.type.in_(names)).all()
@@ -53,23 +54,28 @@ class AbsenceBusinessOpe:
 
 
 class UserOpe:
-    def get(self, pk=None):
-        return session.get(User, pk)
+    def get(self, pk=None, bid=None):
+        return session.query(UserAlchemy).filter(and_(UserAlchemy.business_id == bid, UserAlchemy.id == pk)).first()
 
-    def list(self):
-        return session.query(User).all()
+    def list(self, bid):
+        return session.query(UserAlchemy).filter(UserAlchemy.business_id == bid)
 
     def add(self, usr):
         session.add(usr)
-        commit()
+        session.flush()
 
     def delete(self, usr):
         session.delete(usr)
         commit()
 
+    def users_by_manager_id(self, manager):
+        return session.query(UserAlchemy).filter(
+            and_(manager.business_id == UserAlchemy.business_id, manager.id != UserAlchemy.id,
+                 UserAlchemy.role != 'Manager')).all()
+
     def usr_by_username(self, username=None, password=None):
-        return session.query(User).outerjoin(Login, User.id == Login.user_id).where(
-            and_(Login.username == username, Login.password == password)).first()
+        return session.query(UserAlchemy).filter(
+            and_(UserAlchemy.username == username, UserAlchemy.password == password)).first()
 
 
 class BusinessOpe:
@@ -85,22 +91,6 @@ class BusinessOpe:
 
     def delete(self, business):
         session.delete(business)
-        commit()
-
-
-class LoginOpe:
-    def get(self, username=None):
-        return session.query(Login).where(Login.username == username).first()
-
-    def list(self):
-        return session.query(Login).all()
-
-    def add(self, login):
-        session.add(login)
-        commit()
-
-    def delete(self, login):
-        session.delete(login)
         commit()
 
 
@@ -120,8 +110,8 @@ class AbsenceRequestOpe:
         commit()
 
     def get_by_business_id(self, pk=None):
-        return session.query(AbsenceRequest).join(User, AbsenceRequest.user_id == User.id).filter(
-            User.business_id == pk).all()
+        return session.query(AbsenceRequest).join(UserAlchemy, AbsenceRequest.user_id == UserAlchemy.id).filter(
+            UserAlchemy.business_id == pk).all()
 
     def get_by_data(self, data, user_id):
         filters = []
