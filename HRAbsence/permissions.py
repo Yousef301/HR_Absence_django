@@ -25,3 +25,23 @@ class ManagerPermissions(permissions.BasePermission):
         if group:
             return BusinessGroup.objects.filter(group=group.id, business_id=bid).exists()
         return False
+
+
+class CanView(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user.has_perms("HRAbsence.view_request")
+
+
+class CanUpdate(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user.has_perms("HRAbsence.edit_request")
+
+
+class CanApprove(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user.has_perms("HRAbsence.approve_request")
+
+
+class CanDelete(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user.has_perms("HRAbsence.delete_request")
