@@ -11,10 +11,10 @@ from rest_framework import permissions
 #         manager = bool(usr.role.name == "Manager")
 #         return bool(request.user and manager)
 
-class IsAuthenticated(permissions.BasePermission):
-    def has_permission(self, request, view):
-        u_pk = int(request.parser_context['kwargs']['user_pk'])
-        return bool(request.user and request.user.is_authenticated and u_pk == request.user.user_id)
+# class IsAuthenticated(permissions.BasePermission):
+#     def has_permission(self, request, view):
+#         u_pk = int(request.parser_context['kwargs']['pk'])
+#         return bool(request.user and request.user.is_authenticated and u_pk == request.user.user_id)
 
 
 class ManagerPermissions(permissions.BasePermission):
@@ -29,19 +29,19 @@ class ManagerPermissions(permissions.BasePermission):
 
 class CanView(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.has_perms("HRAbsence.view_request")
+        return request.user.has_perm('HRAbsence.view_request')
 
 
 class CanUpdate(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.has_perms("HRAbsence.edit_request")
+        return request.user.has_perm("HRAbsence.edit_request")
 
 
 class CanApprove(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.has_perms("HRAbsence.approve_request")
+        return request.user.has_perm("HRAbsence.approve_request")
 
 
 class CanDelete(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.has_perms("HRAbsence.delete_request")
+        return request.user.has_perm("HRAbsence.delete_request")
